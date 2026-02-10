@@ -1,0 +1,16 @@
+name: SkyblockPurge
+version: '1.0'
+main: me.Iretemi.skyblockPurge.SkyblockPurge
+api-version: '1.21'
+load: STARTUP
+authors: [ Iretemi Ogunlaja ]
+description: Blood Moon Event
+depend:
+  - Lead
+commands:
+  SkyblockPurge:
+    description: Skyblock Purge command
+    usage: /<command>
+  Strike:
+    description: Strike command
+    usage: /<command>
