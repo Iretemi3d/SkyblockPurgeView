@@ -63,13 +63,18 @@ public final class SkyblockPurge extends JavaPlugin implements CommandExecutor, 
             String[] args
     ) {
         if (args.length == 1 && command.getName().equalsIgnoreCase("SkyblockPurge")) {
-            return List.of("start", "end", "reload");
+            return List.of("start", "end", "reload", "setMaxHealth");
         }
 
+        List<String> names = new ArrayList<>();
+        for (Player p : Bukkit.getOnlinePlayers()) names.add(p.getName());
+
         if (args.length == 1 && command.getName().equalsIgnoreCase("Strike")) {
-            List<String> names = new ArrayList<>();
-            for (Player p : Bukkit.getOnlinePlayers()) names.add(p.getName());
             return StringUtil.copyPartialMatches(args[0], names, new ArrayList<>());
+        }
+
+        if (args.length == 2 && command.getName().equalsIgnoreCase("SkyblockPurge") && args[0].equalsIgnoreCase("setMaxHealth")) {
+            return StringUtil.copyPartialMatches(args[1], names, new ArrayList<>());
         }
 
         return Collections.emptyList();
@@ -81,6 +86,10 @@ public final class SkyblockPurge extends JavaPlugin implements CommandExecutor, 
 
         if (!(sender instanceof Player send) || !sender.isOp()) {
             sender.sendMessage("You must be an operator to use this command.");
+            return true;
+        }
+        if (args.length == 0) {
+            sender.sendMessage("Usage: /SkyblockPurge <start|end|reload|setMaxHealth>");
             return true;
         }
         World world = send.getWorld();
@@ -98,7 +107,7 @@ public final class SkyblockPurge extends JavaPlugin implements CommandExecutor, 
                     joinsLocked = false;
                     sender.sendMessage("Joins Enabled!");
                 }
-            }.runTaskLater(plugin, 20L * 60 * 3);
+            }.runTaskLater(plugin, 20L * 60 * 2);
 
             for (Player eplayer : Bukkit.getOnlinePlayers()) {
                 eplayer.playSound(
@@ -126,6 +135,15 @@ public final class SkyblockPurge extends JavaPlugin implements CommandExecutor, 
             return true;
         }
 
+        if (args[0].equalsIgnoreCase("setMaxHealth")) {
+            try {
+                setMaxHealth(Bukkit.getPlayer(args[1]));
+
+            } catch (Exception e) {
+                sender.sendMessage(ChatColor.RED + "Invalid player!");
+            }
+            return true;
+        }
 
         if (args[0].equalsIgnoreCase("reload")) {
             reloadConfig();
@@ -165,17 +183,7 @@ public final class SkyblockPurge extends JavaPlugin implements CommandExecutor, 
             }.runTaskTimer(this, 40L, 10L);;
 
             for (Player p : Bukkit.getOnlinePlayers()) {
-                PersistentDataContainer pdc = p.getPersistentDataContainer();
-                if (pdc.has(MAX_HEALTH_KEY, PersistentDataType.DOUBLE)) {
-                    pdc.remove(MAX_HEALTH_KEY);
-                }
-
-                AttributeInstance attr = p.getAttribute(Attribute.GENERIC_MAX_HEALTH);
-                if (attr != null) {
-                    double defaultMax = 20.0;
-                    attr.setBaseValue(defaultMax);
-                    p.setHealth(Math.min(p.getHealth(), defaultMax));
-                }
+                setMaxHealth(p);
             }
 
             return true;
@@ -183,7 +191,6 @@ public final class SkyblockPurge extends JavaPlugin implements CommandExecutor, 
 
             return true;
         }
-
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
@@ -193,13 +200,30 @@ public final class SkyblockPurge extends JavaPlugin implements CommandExecutor, 
         if (attr == null) return;
         double newMax = attr.getBaseValue() - 2.0; // 1 heart = 2 health
 
-        if (newMax < 2.0) {banplayer(player);}
+        if (newMax < 2.0) {
+            banplayer(player);
+            return;
+        }
         attr.setBaseValue(newMax);
         saveMaxHealth(player, newMax);
     }
 
     private final NamespacedKey MAX_HEALTH_KEY =
             new NamespacedKey(this, "permanent_max_health");
+
+    private void  setMaxHealth(Player p) {
+        PersistentDataContainer pdc = p.getPersistentDataContainer();
+        if (pdc.has(MAX_HEALTH_KEY, PersistentDataType.DOUBLE)) {
+            pdc.remove(MAX_HEALTH_KEY);
+        }
+
+        AttributeInstance attr = p.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        if (attr != null) {
+            double defaultMax = 20.0;
+            attr.setBaseValue(defaultMax);
+            p.setHealth(Math.min(p.getHealth(), defaultMax));
+        }
+    }
 
     private void saveMaxHealth(Player player, double value) {
         player.getPersistentDataContainer().set(
@@ -237,11 +261,13 @@ public final class SkyblockPurge extends JavaPlugin implements CommandExecutor, 
 
             Player player = event.getPlayer();
             applyStoredHealth(player);
-            Location deathLoc = player.getLastDeathLocation().clone();
+            Location deathLoc = player.getLastDeathLocation();
+            if (deathLoc == null) return;
+            deathLoc = deathLoc.clone();
             deathLoc.setY(getConfig().getInt("respawnheight"));
 
             player.teleport(deathLoc);
-            PotionEffect effect = new PotionEffect(PotionEffectType.SLOW_FALLING, 200, 4);
+            PotionEffect effect = new PotionEffect(PotionEffectType.SLOW_FALLING, 300, 4);
             player.addPotionEffect(effect);
         });
     }
@@ -328,7 +354,7 @@ public final class SkyblockPurge extends JavaPlugin implements CommandExecutor, 
     private static final Random RANDOM = new Random();
     private Material getWeightedRandomDrop() {
         int roll = RANDOM.nextInt(100); // 0–99
-        if  (roll < 25) return Material.WHEAT;             // 25%
+        if  (roll < 25) return Material.AIR;             // 25%
         if (roll < 45) return Material.COAL;              // 20%
         if (roll < 65) return Material.IRON_INGOT;        // 20%
         if (roll < 80) return Material.GOLD_INGOT;        // 15%
