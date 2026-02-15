@@ -49,7 +49,7 @@ public class PlayerDistribution {
         new BukkitRunnable() {
                 @Override
                 public void run() {
-                    distributePlayers(world, maxSize);
+                    distributePlayers(plugin, world, maxSize);
                 }
             }.runTaskLater(plugin, 20L * 10);
 
@@ -57,12 +57,28 @@ public class PlayerDistribution {
     }
 
 
-    public static void distributePlayers(World world, Integer maxSize) {
+    public static void distributePlayers(JavaPlugin plugin, World world, Integer maxSize) {
 
-        Location loc1 = new Location(world, 411, 42, 437);
-        Location loc2 = new Location(world, -434, 42, 473);
-        Location loc3 = new Location(world, -429, 42, 1327);
-        Location loc4 = new Location(world, 448, 42, 1312);
+        Location loc1 = new Location(world, -18, 54, 127);
+        Location loc2 = new Location(world, 0, 64, 1);
+        Location loc3 = new Location(world, -1, 75, -57);
+        Location loc4 = new Location(world, -5, 63, -133);
+        Location loc5 = new Location(world, -58, 63, -90);
+        Location loc6 = new Location(world, -155, 87, -74);
+        Location loc7 = new Location(world, -119, 64, -5);
+        Location loc8 = new Location(world, -117, 58, 119);
+        Location loc9 = new Location(world, -67, 64, 168);
+        Location loc10 = new Location(world, 90, 78, -99);
+        Location loc11 = new Location(world, 87, 64, 63);
+        Location loc12 = new Location(world, 86, 63, -13);
+        Location loc13 = new Location(world, -51, 102, -45);
+        Location loc14 = new Location(world, -39, 98, 34);
+        Location loc15 = new Location(world, 44, 27, -99);
+        Location loc16 = new Location(world, -144, 58, 41);
+        Location loc17 = new Location(world, -68, 27, 59);
+
+
+
 
 
         List<Location> locations = new ArrayList<>();
@@ -70,6 +86,20 @@ public class PlayerDistribution {
         locations.add(loc2);
         locations.add(loc3);
         locations.add(loc4);
+        locations.add(loc5);
+        locations.add(loc6);
+        locations.add(loc7);
+        locations.add(loc8);
+        locations.add(loc9);
+        locations.add(loc10);
+        locations.add(loc11);
+        locations.add(loc12);
+        locations.add(loc13);
+        locations.add(loc14);
+        locations.add(loc15);
+        locations.add(loc16);
+        locations.add(loc17);
+
 
         int index = 0;
         int teamlessSize = teamless.size();
@@ -80,8 +110,8 @@ public class PlayerDistribution {
             List<ITeamMember> members = team.getMembers();
             //if team size is smaller than 3 add more members
             int size = members.size();
-            if (size < 3) {
-                for (int i = 0; i < (3 - size); i++) {
+            if (size < maxSize) {
+                for (int i = 0; i < (maxSize - size); i++) {
                     if (memIndex >= teamlessSize) break;
                     team.addMember(teamless.get(memIndex));
                     memIndex++;
